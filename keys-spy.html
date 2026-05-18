@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIPHER KEYS — Classified Access</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #f0d080;
+    --gold-dim: #7a5f24;
+    --black: #050505;
+    --dark: #0a0a0a;
+    --panel: #0d0d0d;
+    --border: #1f1f1f;
+    --green: #00ff88;
+    --red: #ff2244;
+    --text: #c8c8c8;
+    --text-dim: #666;
+    --glow: rgba(201,168,76,0.3);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 400;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* ─── ANIMATED BACKGROUND ─── */
+  .bg-layer {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  }
+
+  /* Grid lines */
+  .bg-grid {
+    background-image:
+      linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridScroll 30s linear infinite;
+  }
+  @keyframes gridScroll {
+    0% { background-position: 0 0; }
+    100% { background-position: 60px 60px; }
+  }
+
+  /* Radial vignette */
+  .bg-vignette {
+    background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.06) 0%, transparent 70%),
+                radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.8) 0%, transparent 60%);
+  }
+
+  /* Scanlines */
+  .bg-scan {
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.15) 2px,
+      rgba(0,0,0,0.15) 4px
+    );
+    animation: scanMove 8s linear infinite;
+  }
+  @keyframes scanMove {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(4px); }
+  }
+
+  /* Floating key particles */
+  .particles {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    font-size: 1rem;
+    opacity: 0;
+    color: var(--gold-dim);
+    animation: floatUp linear infinite;
+    filter: blur(0.5px);
+  }
+  @keyframes floatUp {
+    0%   { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+    5%   { opacity: 0.3; }
+    95%  { opacity: 0.15; }
+    100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ─── LAYOUT ─── */
+  .wrapper { position: relative; z-index: 1; }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 3rem;
+    height: 64px;
+    background: rgba(5,5,5,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+  }
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+  .nav-logo .key-icon { font-size: 1.4rem; filter: drop-shadow(0 0 6px var(--gold)); }
+  .nav-links {
+    display: flex; gap: 2.5rem; list-style: none;
+  }
+  .nav-links a {
+    text-decoration: none;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    transition: color 0.3s;
+    position: relative;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute; bottom: -4px; left: 0; right: 0;
+    height: 1px;
+    background: var(--gold);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 0.3s;
+  }
+  .nav-links a:hover { color: var(--gold); }
+  .nav-links a:hover::after { transform: scaleX(1); }
+  .nav-status {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--green);
+    letter-spacing: 0.1em;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  /* ─── HERO ─── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center;
+    padding: 8rem 2rem 6rem;
+    position: relative;
+  }
+
+  .hero-classify {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.4em;
+    color: var(--red);
+    border: 1px solid var(--red);
+    padding: 0.3rem 1.2rem;
+    margin-bottom: 2.5rem;
+    text-transform: uppercase;
+    animation: classifyPulse 3s ease-in-out infinite;
+  }
+  @keyframes classifyPulse {
+    0%,100% { box-shadow: 0 0 0 rgba(255,34,68,0); }
+    50% { box-shadow: 0 0 20px rgba(255,34,68,0.3); }
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4rem, 12vw, 10rem);
+    letter-spacing: 0.05em;
+    line-height: 0.9;
+    color: #fff;
+    position: relative;
+    margin-bottom: 0.2em;
+  }
+  .hero-title .line-gold { color: var(--gold); display: block; }
+  .hero-title .glitch {
+    position: relative;
+    animation: glitch 6s infinite;
+  }
+  @keyframes glitch {
+    0%,94%,100% { text-shadow: none; }
+    95% { text-shadow: -3px 0 var(--red), 3px 0 #0ff; clip-path: inset(10% 0 80% 0); }
+    96% { text-shadow: 3px 0 var(--red), -3px 0 #0ff; clip-path: inset(50% 0 30% 0); }
+    97% { text-shadow: none; clip-path: none; }
+  }
+
+  .hero-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.3em;
+    color: var(--gold-dim);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+  }
+
+  .hero-desc {
+    max-width: 540px;
+    font-size: 1.05rem;
+    font-weight: 300;
+    color: var(--text-dim);
+    line-height: 1.7;
+    margin: 1.5rem auto 3rem;
+  }
+
+  .hero-btns { display: flex; gap: 1.2rem; justify-content: center; flex-wrap: wrap; }
+
+  .btn-primary {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 0.9rem 2.4rem;
+    background: var(--gold);
+    color: var(--black);
+    border: none;
+    cursor: crosshair;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+    clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+  }
+  .btn-primary::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: #fff;
+    transform: translateX(-100%) skewX(-15deg);
+    transition: transform 0.4s;
+  }
+  .btn-primary:hover::before { transform: translateX(110%) skewX(-15deg); }
+  .btn-primary:hover { box-shadow: 0 0 30px rgba(201,168,76,0.5); }
+
+  .btn-secondary {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 0.9rem 2.4rem;
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid rgba(201,168,76,0.5);
+    cursor: crosshair;
+    transition: all 0.3s;
+    clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+  }
+  .btn-secondary:hover {
+    background: rgba(201,168,76,0.08);
+    border-color: var(--gold);
+    box-shadow: 0 0 20px rgba(201,168,76,0.2);
+  }
+
+  /* hero key graphic */
+  .hero-key-graphic {
+    position: absolute;
+    font-size: 28rem;
+    opacity: 0.022;
+    color: var(--gold);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) rotate(-20deg);
+    user-select: none; pointer-events: none;
+    filter: blur(1px);
+    animation: heroKeyFloat 12s ease-in-out infinite;
+  }
+  @keyframes heroKeyFloat {
+    0%,100% { transform: translate(-50%, -50%) rotate(-20deg); }
+    50% { transform: translate(-50%, -53%) rotate(-18deg); }
+  }
+
+  /* ─── DIVIDER ─── */
+  .divider {
+    display: flex; align-items: center; gap: 1.5rem;
+    padding: 0 3rem;
+    margin: 2rem 0;
+  }
+  .divider-line {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+  }
+  .divider-icon { color: var(--gold); font-size: 1.1rem; opacity: 0.6; }
+
+  /* ─── SECTION HEADER ─── */
+  .section { padding: 6rem 3rem; }
+  .section-header { text-align: center; margin-bottom: 4rem; }
+  .section-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.5em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 0.8rem;
+  }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    letter-spacing: 0.05em;
+    color: #fff;
+  }
+  .section-title span { color: var(--gold); }
+
+  /* ─── KEYS GRID ─── */
+  .keys-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5px;
+    max-width: 1200px;
+    margin: 0 auto;
+    border: 1px solid var(--border);
+  }
+  .key-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 2.5rem 2rem;
+    position: relative;
+    overflow: hidden;
+    cursor: crosshair;
+    transition: all 0.4s;
+  }
+  .key-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(201,168,76,0.05) 0%, transparent 60%);
+    opacity: 0; transition: opacity 0.4s;
+  }
+  .key-card::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    transform: scaleX(0); transform-origin: center;
+    transition: transform 0.4s;
+  }
+  .key-card:hover { background: #111; transform: translateY(-2px); }
+  .key-card:hover::before { opacity: 1; }
+  .key-card:hover::after { transform: scaleX(1); }
+  .key-card:hover .key-card-icon { transform: rotate(15deg) scale(1.1); filter: drop-shadow(0 0 12px var(--gold)); }
+
+  .key-card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1.2rem;
+    display: inline-block;
+    transition: all 0.4s;
+    filter: drop-shadow(0 0 4px rgba(201,168,76,0.4));
+  }
+  .key-card-code {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    color: var(--gold-dim);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+  }
+  .key-card-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.08em;
+    color: #fff;
+    margin-bottom: 0.7rem;
+  }
+  .key-card-desc {
+    font-size: 0.88rem;
+    font-weight: 300;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+  .key-card-spec {
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 1px solid var(--border);
+    padding-top: 1.2rem;
+  }
+  .spec-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+  .spec-val {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--gold);
+  }
+
+  /* ─── TERMINAL SECTION ─── */
+  .terminal-wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    border: 1px solid rgba(201,168,76,0.2);
+    background: #060606;
+    overflow: hidden;
+  }
+  .terminal-bar {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.7rem 1rem;
+    background: #0f0f0f;
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+  }
+  .t-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .t-dot.red { background: #ff5f56; }
+  .t-dot.yellow { background: #ffbd2e; }
+  .t-dot.green { background: #27c93f; }
+  .t-title {
+    flex: 1; text-align: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.2em;
+  }
+  .terminal-body {
+    padding: 2rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 2;
+  }
+  .t-line { display: flex; gap: 0.8rem; }
+  .t-prompt { color: var(--gold); }
+  .t-cmd { color: #e8e8e8; }
+  .t-out { color: var(--text-dim); padding-left: 1.5rem; }
+  .t-out.green { color: var(--green); }
+  .t-out.gold { color: var(--gold); }
+  .t-out.red { color: var(--red); }
+  .cursor {
+    display: inline-block;
+    width: 8px; height: 1em;
+    background: var(--gold);
+    animation: cursorBlink 1s step-end infinite;
+    vertical-align: text-bottom;
+  }
+  @keyframes cursorBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* ─── STATS STRIP ─── */
+  .stats-strip {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    padding: 3rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 2rem;
+    text-align: center;
+  }
+  .stat-item {}
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.5rem;
+    letter-spacing: 0.05em;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 0.3rem;
+    filter: drop-shadow(0 0 10px rgba(201,168,76,0.4));
+  }
+  .stat-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  /* ─── FEATURES ─── */
+  .features-grid {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+  .feature-item {
+    padding: 2rem;
+    border-left: 2px solid rgba(201,168,76,0.15);
+    transition: border-color 0.3s;
+  }
+  .feature-item:hover { border-color: var(--gold); }
+  .feature-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+  .feature-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.08em;
+    color: #fff;
+    margin-bottom: 0.6rem;
+  }
+  .feature-desc {
+    font-size: 0.9rem;
+    font-weight: 300;
+    color: var(--text-dim);
+    line-height: 1.65;
+  }
+
+  /* ─── CLASSIFIED BANNER ─── */
+  .classified-banner {
+    position: relative;
+    overflow: hidden;
+    padding: 5rem 3rem;
+    text-align: center;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .classified-bg {
+    position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(
+        45deg,
+        rgba(255,34,68,0.03) 0px,
+        rgba(255,34,68,0.03) 10px,
+        transparent 10px,
+        transparent 40px
+      );
+  }
+  .classified-stamp {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 8vw, 7rem);
+    letter-spacing: 0.3em;
+    color: var(--red);
+    opacity: 0.12;
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) rotate(-12deg);
+    white-space: nowrap;
+    pointer-events: none;
+    border: 6px solid var(--red);
+    padding: 0.2em 0.5em;
+  }
+  .classified-content { position: relative; z-index: 1; }
+  .classified-content h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2rem, 5vw, 4rem);
+    letter-spacing: 0.08em;
+    color: #fff;
+    margin-bottom: 1rem;
+  }
+  .classified-content p {
+    font-size: 1rem; font-weight: 300;
+    color: var(--text-dim); max-width: 500px; margin: 0 auto 2.5rem;
+    line-height: 1.7;
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    padding: 3rem;
+    border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; align-items: center; gap: 1.5rem;
+    text-align: center;
+  }
+  .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+  }
+  .footer-line {
+    width: 60px; height: 1px;
+    background: var(--gold-dim);
+  }
+  .footer-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  /* ─── TICKER ─── */
+  .ticker {
+    background: rgba(201,168,76,0.07);
+    border-top: 1px solid rgba(201,168,76,0.15);
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+    overflow: hidden;
+    padding: 0.7rem 0;
+    white-space: nowrap;
+  }
+  .ticker-inner {
+    display: inline-block;
+    animation: ticker 30s linear infinite;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--gold-dim);
+  }
+  @keyframes ticker { from{transform:translateX(100vw)} to{transform:translateX(-100%)} }
+  .ticker-sep { color: var(--gold); margin: 0 2rem; }
+
+  /* ─── SCROLL FX ─── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible { opacity: 1; transform: none; }
+
+  /* ─── CROSSHAIR CURSOR RING ─── */
+  #cursor-ring {
+    position: fixed;
+    width: 32px; height: 32px;
+    border: 1px solid rgba(201,168,76,0.4);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%,-50%);
+    transition: transform 0.05s, width 0.2s, height 0.2s, border-color 0.2s;
+  }
+
+  @media(max-width:768px){
+    nav { padding: 0 1.5rem; }
+    .nav-links { display: none; }
+    .section { padding: 4rem 1.5rem; }
+    .hero { padding: 7rem 1.5rem 4rem; }
+    .stats-strip { padding: 2rem 1.5rem; }
+    .hero-key-graphic { font-size: 14rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Cursor ring -->
+<div id="cursor-ring"></div>
+
+<!-- Backgrounds -->
+<div class="bg-layer bg-grid"></div>
+<div class="bg-layer bg-scan"></div>
+<div class="bg-layer bg-vignette"></div>
+
+<!-- Floating key particles -->
+<div class="particles" id="particles"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <span class="key-icon">🗝</span> CIPHER KEYS
+  </div>
+  <ul class="nav-links">
+    <li><a href="#products">Arsenal</a></li>
+    <li><a href="#features">Capabilities</a></li>
+    <li><a href="#terminal">Intel</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <div class="nav-status">
+    <div class="status-dot"></div>
+    SECURE CHANNEL ACTIVE
+  </div>
+</nav>
+
+<!-- TICKER -->
+<div class="ticker" style="position:fixed;top:64px;left:0;right:0;z-index:99;">
+  <span class="ticker-inner">
+    CLEARANCE LEVEL: OMEGA <span class="ticker-sep">◆</span>
+    ENCRYPTION: AES-256 <span class="ticker-sep">◆</span>
+    STATUS: OPERATIONAL <span class="ticker-sep">◆</span>
+    KEYS IN CIRCULATION: 14,827 <span class="ticker-sep">◆</span>
+    LAST ACCESS: [REDACTED] <span class="ticker-sep">◆</span>
+    MISSION: CLASSIFIED <span class="ticker-sep">◆</span>
+    OPERATIVE: STANDING BY <span class="ticker-sep">◆</span>
+    CIPHER KEYS — PRECISION. SECURITY. ACCESS. <span class="ticker-sep">◆</span>
+  </span>
+</div>
+
+<div class="wrapper">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-key-graphic">🗝</div>
+    <div class="hero-classify">⬛ TOP SECRET // SI // NOFORN ⬛</div>
+    <h1 class="hero-title">
+      <span class="glitch">CIPHER</span>
+      <span class="line-gold">KEYS</span>
+    </h1>
+    <p class="hero-sub">Division 7 — Access Solutions</p>
+    <p class="hero-desc">
+      Precision-crafted keys engineered for those who demand absolute security.
+      Every cut. Every tumbler. Every access point — classified.
+    </p>
+    <div class="hero-btns">
+      <a href="#products" class="btn-primary">Request Access</a>
+      <a href="#terminal" class="btn-secondary">View Intel</a>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-strip reveal">
+    <div class="stat-item">
+      <div class="stat-num">99.9%</div>
+      <div class="stat-label">Security Rating</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">7K+</div>
+      <div class="stat-label">Operatives Equipped</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">256</div>
+      <div class="stat-label">Bit Encryption</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">0</div>
+      <div class="stat-label">Breaches Recorded</div>
+    </div>
+  </div>
+
+  <!-- PRODUCTS -->
+  <section class="section" id="products">
+    <div class="section-header reveal">
+      <div class="section-tag">// PRODUCT DOSSIER</div>
+      <h2 class="section-title">THE <span>KEY</span> ARSENAL</h2>
+    </div>
+    <div class="keys-grid">
+      <div class="key-card reveal">
+        <span class="key-card-icon">🔑</span>
+        <div class="key-card-code">// KY-001</div>
+        <div class="key-card-name">PHANTOM ENTRY</div>
+        <div class="key-card-desc">Standard-cut residential key. Precision milled to 0.01mm tolerance. Designed for silent insertion and smooth operation.</div>
+        <div class="key-card-spec">
+          <span class="spec-label">Clearance</span>
+          <span class="spec-val">LEVEL-1</span>
+        </div>
+      </div>
+      <div class="key-card reveal">
+        <span class="key-card-icon">🗝️</span>
+        <div class="key-card-code">// KY-002</div>
+        <div class="key-card-name">SKELETON MASTER</div>
+        <div class="key-card-desc">Master key system for multi-unit access. Single key, multiple clearances. Only issued to authorized personnel.</div>
+        <div class="key-card-spec">
+          <span class="spec-label">Clearance</span>
+          <span class="spec-val">LEVEL-3</span>
+        </div>
+      </div>
+      <div class="key-card reveal">
+        <span class="key-card-icon">🔐</span>
+        <div class="key-card-code">// KY-003</div>
+        <div class="key-card-name">CIPHER LOCK</div>
+        <div class="key-card-desc">High-security dimple key with laser-etched serial. Anti-duplication coating. Registered ownership only.</div>
+        <div class="key-card-spec">
+          <span class="spec-label">Clearance</span>
+          <span class="spec-val">LEVEL-5</span>
+        </div>
+      </div>
+      <div class="key-card reveal">
+        <span class="key-card-icon">🔒</span>
+        <div class="key-card-code">// KY-004</div>
+        <div class="key-card-name">VAULT ACCESS</div>
+        <div class="key-card-desc">Commercial-grade high-security key for classified storage and vault systems. Patented cut restricted worldwide.</div>
+        <div class="key-card-spec">
+          <span class="spec-label">Clearance</span>
+          <span class="spec-val">LEVEL-7</span>
+        </div>
+      </div>
+      <div class="key-card reveal">
+        <span class="key-card-icon">🛡️</span>
+        <div class="key-card-code">// KY-005</div>
+        <div class="key-card-name">SENTINEL FOB</div>
+        <div class="key-card-desc">Transponder key with encrypted RFID chip. Rolling-code technology. Immune to relay attacks and signal cloning.</div>
+        <div class="key-card-spec">
+          <span class="spec-label">Clearance</span>
+          <span class="spec-val">LEVEL-6</span>
+        </div>
+      </div>
+      <div class="key-card reveal">
+        <span class="key-card-icon">⚙️</span>
+        <div class="key-card-code">// KY-006</div>
+        <div class="key-card-name">BESPOKE AGENT</div>
+        <div class="key-card-desc">Custom-cut to your specification. Proprietary blank. Documented chain of custody from forge to field.</div>
+        <div class="key-card-spec">
+          <span class="spec-label">Clearance</span>
+          <span class="spec-val">CLASSIFIED</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"><div class="divider-line"></div><span class="divider-icon">🗝</span><div class="divider-line"></div></div>
+
+  <!-- FEATURES -->
+  <section class="section" id="features">
+    <div class="section-header reveal">
+      <div class="section-tag">// OPERATIONAL CAPABILITIES</div>
+      <h2 class="section-title">WHY <span>CIPHER</span></h2>
+    </div>
+    <div class="features-grid">
+      <div class="feature-item reveal">
+        <span class="feature-icon">🎯</span>
+        <div class="feature-title">Precision Engineering</div>
+        <div class="feature-desc">Every key cut to military tolerances. CNC-milled from aircraft-grade brass alloy. No variation. No failure.</div>
+      </div>
+      <div class="feature-item reveal">
+        <span class="feature-icon">🔏</span>
+        <div class="feature-title">Anti-Duplication Tech</div>
+        <div class="feature-desc">Patent-protected profiles. Laser-encoded serial numbers. Restricted blanks. Your key stays your key.</div>
+      </div>
+      <div class="feature-item reveal">
+        <span class="feature-icon">⚡</span>
+        <div class="feature-title">Rapid Deployment</div>
+        <div class="feature-desc">48-hour turnaround on all orders. Secure courier delivery. Tamper-evident packaging. Mission-ready on arrival.</div>
+      </div>
+      <div class="feature-item reveal">
+        <span class="feature-icon">📡</span>
+        <div class="feature-title">Smart Key Systems</div>
+        <div class="feature-desc">RFID and NFC-enabled transponder fobs. Digital audit trail. Remote revocation capability on advanced systems.</div>
+      </div>
+      <div class="feature-item reveal">
+        <span class="feature-icon">🧬</span>
+        <div class="feature-title">Registered Ownership</div>
+        <div class="feature-desc">Every Cipher key tied to a verified identity. Encrypted registry. No anonymous duplication — ever.</div>
+      </div>
+      <div class="feature-item reveal">
+        <span class="feature-icon">🌐</span>
+        <div class="feature-title">Global Network</div>
+        <div class="feature-desc">Authorized service points in 47 countries. Secure re-key protocols worldwide. One account, universal coverage.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CLASSIFIED BANNER -->
+  <div class="classified-banner reveal">
+    <div class="classified-bg"></div>
+    <div class="classified-stamp">CLASSIFIED</div>
+    <div class="classified-content">
+      <h2>NEED CUSTOM CLEARANCE?</h2>
+      <p>Our bespoke key division handles requests that don't appear in the catalog. Speak to a specialist. All consultations encrypted.</p>
+      <a href="#contact" class="btn-primary">Request Briefing</a>
+    </div>
+  </div>
+
+  <!-- TERMINAL -->
+  <section class="section" id="terminal">
+    <div class="section-header reveal">
+      <div class="section-tag">// SECURE TERMINAL</div>
+      <h2 class="section-title">SYSTEM <span>INTEL</span></h2>
+    </div>
+    <div class="terminal-wrap reveal">
+      <div class="terminal-bar">
+        <div class="t-dot red"></div>
+        <div class="t-dot yellow"></div>
+        <div class="t-dot green"></div>
+        <div class="t-title">CIPHER-OS v4.1.7 — SECURE SHELL</div>
+      </div>
+      <div class="terminal-body">
+        <div class="t-line"><span class="t-prompt">cipher@div7:~$</span><span class="t-cmd">connect --secure --vault OMEGA</span></div>
+        <div class="t-out green">✔ Connection established. Encryption: AES-256-GCM</div>
+        <div class="t-line"><span class="t-prompt">cipher@div7:~$</span><span class="t-cmd">list keys --status active</span></div>
+        <div class="t-out gold">PHANTOM ENTRY    ........  ACTIVE   [1,204 units]</div>
+        <div class="t-out gold">SKELETON MASTER  ........  ACTIVE   [  312 units]</div>
+        <div class="t-out gold">CIPHER LOCK      ........  ACTIVE   [2,891 units]</div>
+        <div class="t-out gold">VAULT ACCESS     ........  ACTIVE   [   47 units]</div>
+        <div class="t-out gold">SENTINEL FOB     ........  ACTIVE   [5,109 units]</div>
+        <div class="t-out red">BESPOKE AGENT    ........  [REDACTED]</div>
+        <div class="t-line"><span class="t-prompt">cipher@div7:~$</span><span class="t-cmd">run --diagnostics --level OMEGA</span></div>
+        <div class="t-out green">✔ Anti-duplication systems: NOMINAL</div>
+        <div class="t-out green">✔ Registry integrity: VERIFIED</div>
+        <div class="t-out green">✔ Breach detection: ACTIVE — 0 anomalies</div>
+        <div class="t-out green">✔ All systems operational.</div>
+        <div class="t-line"><span class="t-prompt">cipher@div7:~$</span><span class="t-cmd"><span class="cursor"></span></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer id="contact">
+    <div class="footer-logo">🗝 CIPHER KEYS</div>
+    <div class="footer-line"></div>
+    <div class="footer-text">Division 7 — Clearance Operations — Est. [REDACTED]</div>
+    <div class="footer-text" style="color:#333">This site is for authorized personnel only. All access is logged.</div>
+  </footer>
+</div>
+
+<script>
+  // Cursor ring
+  const ring = document.getElementById('cursor-ring');
+  document.addEventListener('mousemove', e => {
+    ring.style.left = e.clientX + 'px';
+    ring.style.top = e.clientY + 'px';
+  });
+  document.querySelectorAll('a,button,.key-card').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      ring.style.width = '52px'; ring.style.height = '52px';
+      ring.style.borderColor = 'rgba(201,168,76,0.8)';
+    });
+    el.addEventListener('mouseleave', () => {
+      ring.style.width = '32px'; ring.style.height = '32px';
+      ring.style.borderColor = 'rgba(201,168,76,0.4)';
+    });
+  });
+
+  // Floating particles
+  const symbols = ['🗝','🔑','🔐','🔒','⚙'];
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.fontSize = (0.7 + Math.random() * 1.2) + 'rem';
+    const dur = 18 + Math.random() * 20;
+    const delay = Math.random() * -30;
+    p.style.animation = `floatUp ${dur}s ${delay}s linear infinite`;
+    container.appendChild(p);
+  }
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver(entries => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 60);
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(r => io.observe(r));
+</script>
+</body>
+</html>
