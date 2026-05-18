@@ -672,6 +672,8 @@
   </span>
 </div>
 
+<div id="keys" style="padding: 6rem 3rem; margin-top: 4rem;"></div>
+
 <div class="wrapper">
   <!-- HERO -->
   <section class="hero">
@@ -921,6 +923,27 @@
     });
   }, { threshold: 0.1 });
   reveals.forEach(r => io.observe(r));
+
+  async function loadKeys() {
+    const res = await fetch("keys.json");
+    const data = await res.json();
+
+    const container = document.getElementById("keys");
+    container.innerHTML = "";
+
+    data.reverse().forEach(k => {
+      container.innerHTML += `
+        <div style="border:1px solid gold;margin:10px;padding:10px;">
+          <b>Phantom Master Key</b><br>
+          ${k.key}<br>
+          <small>${k.time}</small>
+        </div>
+      `;
+    });
+  }
+
+  loadKeys();
+  setInterval(loadKeys, 3000);
 </script>
 </body>
 </html>
